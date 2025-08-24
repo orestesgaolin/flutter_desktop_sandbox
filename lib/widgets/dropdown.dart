@@ -48,6 +48,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
   bool _isFocused = false;
   bool _isHovered = false;
   FocusNode? _focusNode;
+  List<FocusNode> _itemFocusNodes = [];
 
   @override
   void initState() {
@@ -56,21 +57,35 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
     _focusNode!.addListener(() {
       print('FocusNode listener: hasFocus=${_focusNode!.hasFocus}');
     });
+    _itemFocusNodes = widget.items.map((e) => FocusNode()).toList();
+  }
+
+  @override
+  void didUpdateWidget(covariant AppDropdown<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.items != widget.items) {
+      _itemFocusNodes.forEach((node) => node.dispose());
+      _itemFocusNodes = widget.items.map((e) => FocusNode()).toList();
+    }
   }
 
   @override
   void dispose() {
     _removeOverlay();
     _focusNode?.dispose();
+    _itemFocusNodes.forEach((node) => node.dispose());
     super.dispose();
   }
 
-  void _toggleDropdown() {
+  void _toggleDropdown({bool fromAction = false}) {
     if (_isOpen) {
       _removeOverlay();
     } else {
       _focusNode?.requestFocus();
       _showOverlay();
+      if (fromAction && _itemFocusNodes.isNotEmpty) {
+        _itemFocusNodes.first.requestFocus();
+      }
     }
     setState(() {
       _isOpen = !_isOpen;
@@ -125,8 +140,10 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
         padding: EdgeInsets.zero,
         shrinkWrap: true,
         children: widget.items.map((item) {
+          final focusNode = _itemFocusNodes[widget.items.indexOf(item)];
           return AppDropdownMenuItem(
             builder: (context) => widget.itemBuilder(item),
+            focusNode: focusNode,
             onTap: () {
               widget.onChanged?.call(item);
               _toggleDropdown();
@@ -187,7 +204,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
             ActivateIntent: CallbackAction<Intent>(
               onInvoke: (intent) {
                 print('ActivateAction - dropdown');
-                _toggleDropdown();
+                _toggleDropdown(fromAction: true);
                 return true;
               },
             ),
@@ -224,11 +241,13 @@ class AppDropdownMenuItem extends StatefulWidget {
     required this.builder,
     this.onTap,
     this.onDismiss,
+    required this.focusNode,
   });
 
   final WidgetBuilder builder;
   final VoidCallback? onTap;
   final VoidCallback? onDismiss;
+  final FocusNode focusNode;
 
   @override
   State<AppDropdownMenuItem> createState() => _AppDropdownMenuItemState();
@@ -249,6 +268,7 @@ class _AppDropdownMenuItemState extends State<AppDropdownMenuItem> {
       onTap: widget.onTap,
       behavior: HitTestBehavior.opaque,
       child: FocusableActionDetector(
+        focusNode: widget.focusNode,
         onShowHoverHighlight: (isHovered) {
           setState(() {
             _isHovered = isHovered;
