@@ -1,6 +1,12 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 
+/// Defines the available button variants
+enum ButtonVariant {
+  primary,
+  secondary,
+}
+
 // inherited widget
 class AppThemeInherited extends InheritedWidget {
   const AppThemeInherited({
@@ -70,13 +76,25 @@ class AppTheme extends Equatable {
         cardDecoration: _defaultCardDecoration,
         tabActiveColor: Colors.white,
         tabInactiveColor: const Color.fromARGB(20, 0, 0, 0),
-        buttonTheme: const AppButtonTheme(
-          backgroundColor: Colors.black,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: Colors.grey,
-          disabledForegroundColor: Colors.white,
-          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          borderRadius: 8.0,
+        buttonTheme: AppButtonTheme(
+          variants: {
+            ButtonVariant.primary: const AppButtonVariantTheme(
+              backgroundColor: Colors.black,
+              foregroundColor: Colors.white,
+              disabledBackgroundColor: Colors.grey,
+              disabledForegroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              borderRadius: 8.0,
+            ),
+            ButtonVariant.secondary: const AppButtonVariantTheme(
+              backgroundColor: Colors.lightGrey,
+              foregroundColor: Colors.black,
+              disabledBackgroundColor: Colors.grey,
+              disabledForegroundColor: Colors.white,
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              borderRadius: 8.0,
+            ),
+          },
         ),
       );
 
@@ -156,6 +174,25 @@ class AppTheme extends Equatable {
 
 class AppButtonTheme extends Equatable {
   const AppButtonTheme({
+    required this.variants,
+  });
+
+  final Map<ButtonVariant, AppButtonVariantTheme> variants;
+
+  static AppButtonTheme of(BuildContext context) {
+    return AppTheme.of(context).buttonTheme;
+  }
+
+  AppButtonVariantTheme forVariant(ButtonVariant variant) {
+    return variants[variant] ?? variants[ButtonVariant.primary]!;
+  }
+
+  @override
+  List<Object?> get props => [variants];
+}
+
+class AppButtonVariantTheme extends Equatable {
+  const AppButtonVariantTheme({
     required this.backgroundColor,
     required this.foregroundColor,
     required this.disabledBackgroundColor,
@@ -170,10 +207,6 @@ class AppButtonTheme extends Equatable {
   final Color disabledForegroundColor;
   final EdgeInsets padding;
   final double borderRadius;
-
-  static AppButtonTheme of(BuildContext context) {
-    return AppTheme.of(context).buttonTheme;
-  }
 
   @override
   List<Object?> get props => [

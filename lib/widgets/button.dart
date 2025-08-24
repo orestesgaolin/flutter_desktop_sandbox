@@ -12,6 +12,7 @@ class AppButton extends StatefulWidget {
     this.semanticsLabel,
     this.focusNode,
     this.autofocus = false,
+    this.variant = ButtonVariant.primary,
   });
 
   /// Callback when button is pressed
@@ -31,6 +32,9 @@ class AppButton extends StatefulWidget {
 
   /// Whether this widget should autofocus
   final bool autofocus;
+
+  /// Button visual style variant
+  final ButtonVariant variant;
 
   @override
   State<AppButton> createState() => _AppButtonState();
@@ -66,17 +70,18 @@ class _AppButtonState extends State<AppButton> {
   @override
   Widget build(BuildContext context) {
     final bool isEnabled = widget.onPressed != null;
-    final theme = AppButtonTheme.of(context);
+    final buttonTheme = AppButtonTheme.of(context);
+    final variantTheme = buttonTheme.forVariant(widget.variant);
 
     final effectiveBackgroundColor = switch ((isEnabled, _isHovered, _isFocused, _isPressed)) {
-      (true, false, false, false) => theme.backgroundColor,
-      (true, true, false, false) => theme.backgroundColor.withValues(alpha: 0.8),
-      (true, false, true, false) => theme.backgroundColor.withValues(alpha: 0.6),
-      _ => theme.disabledBackgroundColor,
+      (true, false, false, false) => variantTheme.backgroundColor,
+      (true, true, false, false) => variantTheme.backgroundColor.withValues(alpha: 0.8),
+      (true, false, true, false) => variantTheme.backgroundColor.withValues(alpha: 0.6),
+      _ => variantTheme.disabledBackgroundColor,
     };
 
-    Color effectiveForegroundColor = theme.foregroundColor;
-    final effectiveDisabledForegroundColor = theme.disabledForegroundColor;
+    Color effectiveForegroundColor = variantTheme.foregroundColor;
+    final effectiveDisabledForegroundColor = variantTheme.disabledForegroundColor;
 
     effectiveForegroundColor = isEnabled ? effectiveForegroundColor : effectiveDisabledForegroundColor;
 
@@ -135,10 +140,10 @@ class _AppButtonState extends State<AppButton> {
             duration: const Duration(milliseconds: 50),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 50),
-              padding: theme.padding,
+              padding: variantTheme.padding,
               decoration: BoxDecoration(
                 color: effectiveBackgroundColor,
-                borderRadius: BorderRadius.circular(theme.borderRadius),
+                borderRadius: BorderRadius.circular(variantTheme.borderRadius),
                 border: _isFocused
                     ? Border.all(
                         color: Colors.white.withValues(alpha: 0.5),
