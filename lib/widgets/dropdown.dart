@@ -133,6 +133,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
             },
             onDismiss: () {
               _toggleDropdown();
+              _focusNode?.requestFocus();
             },
           );
         }).toList(),
@@ -190,15 +191,16 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
                 return true;
               },
             ),
-            DismissIntent: CallbackAction<Intent>(
-              onInvoke: (intent) {
-                print('DismissAction - dropdown');
-                if (_isOpen) {
-                  _toggleDropdown();
-                }
-                return true;
-              },
-            ),
+            if (_isOpen)
+              DismissIntent: CallbackAction<Intent>(
+                onInvoke: (intent) {
+                  print('DismissAction - dropdown');
+                  if (_isOpen) {
+                    _toggleDropdown();
+                    return true;
+                  }
+                },
+              ),
           },
           mouseCursor: SystemMouseCursors.click,
           child: Container(
@@ -272,6 +274,7 @@ class _AppDropdownMenuItemState extends State<AppDropdownMenuItem> {
             onInvoke: (intent) {
               print('DismissAction - dropdown item');
               widget.onDismiss?.call();
+
               return true;
             },
           ),
