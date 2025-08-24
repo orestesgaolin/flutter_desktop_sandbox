@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
 import 'package:sandbox/theme.dart';
@@ -195,77 +196,92 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
   }
 
   Widget _buildShortcutEditor() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        border: Border.all(color: Color(0xFFDDDDDD)),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            _editingShortcut == null ? 'Add New Shortcut' : 'Edit Shortcut',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
-            ),
+    return Actions(
+      actions: {
+        DismissIntent: CallbackAction<Intent>(
+          onInvoke: (intent) {
+            _cancelEdit();
+            return null;
+          },
+        ),
+      },
+      child: Shortcuts(
+        shortcuts: {
+          LogicalKeySet(LogicalKeyboardKey.escape): DismissIntent(),
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            border: Border.all(color: Color(0xFFDDDDDD)),
+            borderRadius: BorderRadius.circular(8),
           ),
-          const SizedBox(height: 24),
-
-          Text(
-            'Select Action',
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildIntentSelector(),
-          const SizedBox(height: 24),
-
-          Text(
-            'Define Keyboard Shortcut',
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: KeyRecorder(
-                  onKeysRecorded: _onKeysRecorded,
-                  initialKeys: _selectedKeys,
+              Text(
+                _editingShortcut == null ? 'Add New Shortcut' : 'Edit Shortcut',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
               ),
-              if (_selectedKeys != null) ...[
-                const SizedBox(width: 12),
-                AppButton(
-                  onPressed: _clearKeys,
-                  label: 'Clear',
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              AppButton(
-                label: 'Cancel',
-                onPressed: _cancelEdit,
+              Text(
+                'Select Action',
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
               ),
-              const SizedBox(width: 12),
-              AppButton(
-                label: 'Save',
-                onPressed: _selectedKeys != null && _selectedIntentId != null ? _saveShortcut : null,
+              const SizedBox(height: 8),
+              _buildIntentSelector(),
+              const SizedBox(height: 24),
+
+              Text(
+                'Define Keyboard Shortcut',
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: KeyRecorder(
+                      onKeysRecorded: _onKeysRecorded,
+                      initialKeys: _selectedKeys,
+                    ),
+                  ),
+                  if (_selectedKeys != null) ...[
+                    const SizedBox(width: 12),
+                    AppButton(
+                      onPressed: _clearKeys,
+                      label: 'Clear',
+                    ),
+                  ],
+                ],
+              ),
+              const SizedBox(height: 32),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  AppButton(
+                    label: 'Cancel',
+                    onPressed: _cancelEdit,
+                  ),
+                  const SizedBox(width: 12),
+                  AppButton(
+                    label: 'Save',
+                    onPressed: _selectedKeys != null && _selectedIntentId != null ? _saveShortcut : null,
+                  ),
+                ],
               ),
             ],
           ),
-        ],
+        ),
       ),
     );
   }

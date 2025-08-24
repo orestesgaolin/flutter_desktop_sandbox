@@ -212,7 +212,7 @@ class _TabHeaderState extends State<TabHeader> {
         descendantsAreFocusable: false,
         descendantsAreTraversable: false,
         actions: {
-          ActivateAction: CallbackAction<Intent>(
+          ActivateIntent: CallbackAction<Intent>(
             onInvoke: (intent) {
               widget.onTap();
               return null;
