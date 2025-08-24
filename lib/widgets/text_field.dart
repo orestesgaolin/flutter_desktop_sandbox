@@ -27,7 +27,7 @@ class _AppTextFieldState extends State<AppTextField> {
   void initState() {
     super.initState();
     controller = widget.controller ?? TextEditingController();
-    focusNode = widget.focusNode ?? FocusNode();
+    focusNode = widget.focusNode ?? FocusNode(debugLabel: 'AppTextField');
   }
 
   @override

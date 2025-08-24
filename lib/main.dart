@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
@@ -18,32 +17,47 @@ void main() {
         id: 'open_settings',
         name: 'Open Settings',
         keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.comma),
-        intentId: IntentId.openSettings,
+        intent: OpenSettingsIntent(),
       ),
       CustomShortcut(
         id: 'show_command_palette',
         name: 'Show Command Palette',
         keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyP),
-        intentId: IntentId.showCommandPalette,
+        intent: ShowCommandPaletteIntent(),
       ),
       CustomShortcut(
         id: 'open_new_tab',
         name: 'Open New Tab',
         keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyT),
-        intentId: IntentId.openNewTab,
-      ),
-      CustomShortcut(
-        id: 'go_back',
-        name: 'Go Back',
-        keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.arrowLeft),
-        intentId: IntentId.goBack,
+        intent: OpenNewTabIntent(),
       ),
       CustomShortcut(
         id: 'go_back',
         name: 'Go Back',
         keys: LogicalKeySet(LogicalKeyboardKey.backspace),
-        intentId: IntentId.goBack,
+        intent: GoBackIntent(),
       ),
+      for (final i in [1, 2, 3, 4, 5, 6, 7, 8, 9])
+        CustomShortcut(
+          id: 'select_tab_$i',
+          name: 'Select Tab $i',
+          keys: LogicalKeySet(
+            LogicalKeyboardKey.meta,
+            switch (i) {
+              1 => LogicalKeyboardKey.digit1,
+              2 => LogicalKeyboardKey.digit2,
+              3 => LogicalKeyboardKey.digit3,
+              4 => LogicalKeyboardKey.digit4,
+              5 => LogicalKeyboardKey.digit5,
+              6 => LogicalKeyboardKey.digit6,
+              7 => LogicalKeyboardKey.digit7,
+              8 => LogicalKeyboardKey.digit8,
+              9 => LogicalKeyboardKey.digit9,
+              _ => null,
+            },
+          ),
+          intent: SelectTabIntent(i),
+        ),
     ],
   );
   runApp(
@@ -67,83 +81,97 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: shortcutsProvider,
-      child: DefaultTextEditingShortcuts(
-        child: AppThemeInherited(
-          theme: AppTheme.light(),
-          child: Builder(
-            builder: (context) {
-              final shortcutsProvider = context.watch<ShortcutsProvider>();
-              return WidgetsApp(
-                title: 'Desktop Demo',
-                color: AppTheme.of(context).backgroundColor,
-                navigatorKey: globalKey,
-                routes: <String, WidgetBuilder>{
-                  '/': (context) => MyHomePage(),
-                  '/settings': (context) => ShortcutsManagerPage(),
-                },
-                onUnknownRoute: (RouteSettings settings) {
-                  return DesktopPageRoute(
-                    settings: settings,
-                    builder: (context) => ColoredBox(
-                      color: AppTheme.of(context).backgroundColor,
-                      child: Center(
-                        child: Text(
-                          '404 - Page not found',
-                          style: AppTheme.of(context).paragraphStyle,
+      child: DefaultAppTabController(
+        child: DefaultTextEditingShortcuts(
+          child: AppThemeInherited(
+            theme: AppTheme.light(),
+            child: Builder(
+              builder: (context) {
+                final shortcutsProvider = context.watch<ShortcutsProvider>();
+                return FocusScopeListener(
+                  child: WidgetsApp(
+                    title: 'Desktop Demo',
+                    color: AppTheme.of(context).backgroundColor,
+                    navigatorKey: globalKey,
+                    routes: <String, WidgetBuilder>{
+                      '/': (context) => MyHomePage(),
+                      '/settings': (context) => ShortcutsManagerPage(),
+                    },
+                    onUnknownRoute: (RouteSettings settings) {
+                      return DesktopPageRoute(
+                        settings: settings,
+                        builder: (context) => ColoredBox(
+                          color: AppTheme.of(context).backgroundColor,
+                          child: Center(
+                            child: Text(
+                              '404 - Page not found',
+                              style: AppTheme.of(context).paragraphStyle,
+                            ),
+                          ),
                         ),
+                      );
+                    },
+                    textStyle: AppTheme.of(context).paragraphStyle,
+                    shortcuts: {
+                      ...WidgetsApp.defaultShortcuts,
+                      LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyP): ActivateIntent(),
+                      LogicalKeySet(LogicalKeyboardKey.escape): DismissIntent(),
+                      ...shortcutsProvider.getShortcutsMap(),
+                    },
+                    actions: <Type, Action<Intent>>{
+                      ...WidgetsApp.defaultActions,
+                      DismissIntent: CallbackAction<DismissIntent>(
+                        onInvoke: (DismissIntent intent) {
+                          print('DismissIntent - top');
+                          FocusScope.of(context).unfocus();
+                          return true;
+                        },
                       ),
+                      OpenSettingsIntent: CallbackAction<OpenSettingsIntent>(
+                        onInvoke: (OpenSettingsIntent intent) {
+                          debugPrint('Opening settings');
+                          globalKey.currentState?.pushNamed('/settings');
+                          return true;
+                        },
+                      ),
+                      ShowCommandPaletteIntent: CallbackAction<ShowCommandPaletteIntent>(
+                        onInvoke: (ShowCommandPaletteIntent intent) {
+                          debugPrint('Showing command palette');
+                          return true;
+                        },
+                      ),
+                      OpenNewTabIntent: CallbackAction<OpenNewTabIntent>(
+                        onInvoke: (OpenNewTabIntent intent) {
+                          debugPrint('Opening new tab');
+                          return true;
+                        },
+                      ),
+                      GoBackIntent: CallbackAction<GoBackIntent>(
+                        onInvoke: (GoBackIntent intent) {
+                          debugPrint('Going back');
+                          globalKey.currentState?.maybePop();
+                          return true;
+                        },
+                      ),
+                      SelectTabIntent: CallbackAction<SelectTabIntent>(
+                        onInvoke: (intent) {
+                          print('SelectTabIntent - ${intent.tabIndex}');
+                          final controller = AppTabController.of(context);
+                          if (intent.tabIndex > 0 && intent.tabIndex <= controller.length) {
+                            controller.selectedIndex = intent.tabIndex - 1;
+                          }
+                          return true;
+                        },
+                      ),
+                    },
+                    pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) => DesktopPageRoute(
+                      settings: settings,
+                      builder: builder,
                     ),
-                  );
-                },
-                textStyle: AppTheme.of(context).paragraphStyle,
-                shortcuts: {
-                  ...WidgetsApp.defaultShortcuts,
-                  LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyP): ActivateIntent(),
-                  LogicalKeySet(LogicalKeyboardKey.escape): DismissIntent(),
-                  ...shortcutsProvider.getShortcutsMap(),
-                },
-                actions: <Type, Action<Intent>>{
-                  ...WidgetsApp.defaultActions,
-                  DismissIntent: CallbackAction<DismissIntent>(
-                    onInvoke: (DismissIntent intent) {
-                      print('DismissIntent - top');
-                      FocusScope.of(context).unfocus();
-                      return true;
-                    },
                   ),
-                  OpenSettingsIntent: CallbackAction<OpenSettingsIntent>(
-                    onInvoke: (OpenSettingsIntent intent) {
-                      debugPrint('Opening settings');
-                      globalKey.currentState?.pushNamed('/settings');
-                      return true;
-                    },
-                  ),
-                  ShowCommandPaletteIntent: CallbackAction<ShowCommandPaletteIntent>(
-                    onInvoke: (ShowCommandPaletteIntent intent) {
-                      debugPrint('Showing command palette');
-                      return true;
-                    },
-                  ),
-                  OpenNewTabIntent: CallbackAction<OpenNewTabIntent>(
-                    onInvoke: (OpenNewTabIntent intent) {
-                      debugPrint('Opening new tab');
-                      return true;
-                    },
-                  ),
-                  GoBackIntent: CallbackAction<GoBackIntent>(
-                    onInvoke: (GoBackIntent intent) {
-                      debugPrint('Going back');
-                      globalKey.currentState?.maybePop();
-                      return true;
-                    },
-                  ),
-                },
-                pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) => DesktopPageRoute(
-                  settings: settings,
-                  builder: builder,
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
         ),
       ),
@@ -203,6 +231,57 @@ class ShowcasePage extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class FocusScopeListener extends StatefulWidget {
+  const FocusScopeListener({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<FocusScopeListener> createState() => _FocusScopeListenerState();
+}
+
+class _FocusScopeListenerState extends State<FocusScopeListener> {
+  FocusNode? _currentFocus;
+
+  @override
+  void initState() {
+    super.initState();
+    FocusManager.instance.addListener(_focusChangeListener);
+  }
+
+  @override
+  void dispose() {
+    FocusManager.instance.removeListener(_focusChangeListener);
+    super.dispose();
+  }
+
+  void _focusChangeListener() {
+    _currentFocus = FocusManager.instance.primaryFocus;
+    print('Focus changed: ${_currentFocus?.debugLabel}');
+    setState(() {});
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: Stack(
+        children: [
+          Positioned.fill(child: widget.child),
+          Positioned(
+            bottom: 16,
+            left: 16,
+            child: Text(
+              _currentFocus?.debugLabel ?? 'No Focus',
+              style: TextStyle(color: Colors.black),
+            ),
+          ),
+        ],
       ),
     );
   }

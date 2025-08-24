@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:provider/provider.dart';
+import 'package:sandbox/shortcuts/intents.dart';
+import 'package:sandbox/shortcuts/shortcuts_provider.dart';
 import '../theme.dart';
 
 /// Controller for the AppTabView that manages the state of the tabs.
@@ -11,6 +13,7 @@ class AppTabController extends ChangeNotifier {
   AppTabController({int initialIndex = 0}) : _selectedIndex = initialIndex;
 
   int get selectedIndex => _selectedIndex;
+  int length = 0;
 
   set selectedIndex(int value) {
     if (value != _selectedIndex) {
@@ -43,6 +46,39 @@ class AppTab extends Equatable {
   List<Object?> get props => [title, content];
 }
 
+class DefaultAppTabController extends StatefulWidget {
+  const DefaultAppTabController({super.key, required this.child});
+
+  final Widget child;
+
+  @override
+  State<DefaultAppTabController> createState() => _DefaultAppTabControllerState();
+}
+
+class _DefaultAppTabControllerState extends State<DefaultAppTabController> {
+  late AppTabController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AppTabController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider.value(
+      value: _controller,
+      child: widget.child,
+    );
+  }
+}
+
 /// Tabbed view that can accept arbitrary widgets as children. Indicates title of the tab
 /// and selected tab. Allows to switch between tabs with keyboard shortcuts.
 /// Allows to pass custom AppTabController but also instantiates its own if not provided.
@@ -50,13 +86,11 @@ class AppTab extends Equatable {
 class AppTabView extends StatefulWidget {
   final List<AppTab> tabs;
   final AppTabController? controller;
-  final bool enableKeyboardShortcuts;
 
   const AppTabView({
     super.key,
     required this.tabs,
     this.controller,
-    this.enableKeyboardShortcuts = true,
   });
 
   @override
@@ -69,9 +103,10 @@ class _AppTabViewState extends State<AppTabView> {
   @override
   void initState() {
     super.initState();
-    _controller = widget.controller ?? AppTabController();
+    _controller = widget.controller ?? context.read<AppTabController>();
 
     _controller.addListener(_handleControllerChanged);
+    _controller.length = widget.tabs.length;
   }
 
   @override
@@ -84,6 +119,7 @@ class _AppTabViewState extends State<AppTabView> {
     }
     if (widget.tabs.length != oldWidget.tabs.length) {
       _controller.selectedIndex = 0;
+      _controller.length = widget.tabs.length;
     }
   }
 
@@ -101,64 +137,62 @@ class _AppTabViewState extends State<AppTabView> {
     setState(() {});
   }
 
-  // KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
-  //   if (!widget.enableKeyboardShortcuts) return KeyEventResult.ignored;
-
-  //   // Check for Ctrl+Tab or Ctrl+Shift+Tab
-  //   if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.tab && event.isControlPressed) {
-  //     if (event.isShiftPressed) {
-  //       _controller.previousTab(widget.tabs.length);
-  //     } else {
-  //       _controller.nextTab(widget.tabs.length);
-  //     }
-  //     return KeyEventResult.handled;
-  //   }
-
-  //   return KeyEventResult.ignored;
-  // }
-
   @override
   Widget build(BuildContext context) {
     final theme = AppTheme.of(context);
 
     return ChangeNotifierProvider.value(
       value: _controller,
-      child: FocusTraversalGroup(
-        onFocusNodeCreated: (focusNode) {
-          focusNode.canRequestFocus = false;
+      child: Actions(
+        actions: {
+          SelectTabIntent: CallbackAction<SelectTabIntent>(
+            onInvoke: (intent) {
+              if (intent.tabIndex > 0 && intent.tabIndex <= widget.tabs.length) {
+                _controller.selectedIndex = intent.tabIndex - 1;
+              }
+              return true;
+            },
+          ),
         },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Tab header row
-            Container(
-              decoration: BoxDecoration(
-                color: theme.backgroundColor,
-                border: Border(
-                  bottom: BorderSide(
-                    color: theme.secondaryColor,
-                    width: 1.0,
+        child: Shortcuts(
+          shortcuts: context.watch<ShortcutsProvider>().getTabIntentShortcuts(),
+          child: FocusTraversalGroup(
+            onFocusNodeCreated: (focusNode) {
+              focusNode.canRequestFocus = false;
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  decoration: BoxDecoration(
+                    color: theme.backgroundColor,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: theme.secondaryColor,
+                        width: 1.0,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      for (int i = 0; i < widget.tabs.length; i++)
+                        TabHeader(
+                          tab: widget.tabs[i],
+                          index: i,
+                          isSelected: i == _controller.selectedIndex,
+                          onTap: () {
+                            _controller.selectedIndex = i;
+                          },
+                        ),
+                    ],
                   ),
                 ),
-              ),
-              child: Row(
-                children: [
-                  for (int i = 0; i < widget.tabs.length; i++)
-                    TabHeader(
-                      tab: widget.tabs[i],
-                      index: i,
-                      isSelected: i == _controller.selectedIndex,
-                      onTap: () {
-                        _controller.selectedIndex = i;
-                      },
-                    ),
-                ],
-              ),
+                Expanded(
+                  child: widget.tabs.elementAt(_controller.selectedIndex).content,
+                ),
+              ],
             ),
-            Expanded(
-              child: widget.tabs.elementAt(_controller.selectedIndex).content,
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -186,6 +220,19 @@ class TabHeader extends StatefulWidget {
 class _TabHeaderState extends State<TabHeader> {
   bool isHovered = false;
   bool isFocused = false;
+  FocusNode? _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode(debugLabel: 'TabHeader_${widget.tab.title}');
+  }
+
+  @override
+  void dispose() {
+    _focusNode?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -199,6 +246,7 @@ class _TabHeaderState extends State<TabHeader> {
     return GestureDetector(
       onTap: widget.onTap,
       child: FocusableActionDetector(
+        focusNode: _focusNode,
         onFocusChange: (hasFocus) {
           setState(() {
             isFocused = hasFocus;

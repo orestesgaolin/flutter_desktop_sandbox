@@ -41,7 +41,7 @@ class ShortcutsProvider extends ChangeNotifier {
   /// Convert shortcuts to a map of key sets to intents for use with Flutter's Shortcuts widget
   Map<LogicalKeySet, Intent> getShortcutsMap() {
     return {
-      for (final shortcut in _shortcuts) shortcut.keys: findById(shortcut.intentId),
+      for (final shortcut in _shortcuts) shortcut.keys: shortcut.intent,
     };
   }
 
@@ -52,5 +52,16 @@ class ShortcutsProvider extends ChangeNotifier {
     } catch (e) {
       return null;
     }
+  }
+
+  Map<LogicalKeySet, Intent> getTabIntentShortcuts() {
+    final shortcutsForIntent = shortcuts.where((s) => s.intent is SelectTabIntent).fold<Map<LogicalKeySet, Intent>>(
+      {},
+      (map, shortcut) {
+        map[shortcut.keys] = shortcut.intent;
+        return map;
+      },
+    );
+    return shortcutsForIntent;
   }
 }

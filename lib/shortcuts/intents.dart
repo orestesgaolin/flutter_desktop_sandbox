@@ -1,57 +1,47 @@
 import 'package:flutter/widgets.dart';
 
-enum IntentId {
-  openSettings,
-  showCommandPalette,
-  openNewTab,
-  goBack,
-  previousTab,
-  nextTab,
-}
-
 sealed class CustomIntent extends Intent {
-  final IntentId id;
   final String? name;
-  const CustomIntent(this.id, {this.name});
+  const CustomIntent({this.name});
+
+  static List<CustomIntent> get allIntents {
+    return [
+      const OpenSettingsIntent(),
+      const ShowCommandPaletteIntent(),
+      const OpenNewTabIntent(),
+      const GoBackIntent(),
+      const PreviousTabIntent(),
+      const NextTabIntent(),
+      for (var i = 1; i < 10; i++) SelectTabIntent(i),
+    ];
+  }
 }
 
 class OpenSettingsIntent extends CustomIntent {
-  const OpenSettingsIntent() : super(IntentId.openSettings, name: 'Open Settings');
+  const OpenSettingsIntent() : super(name: 'Open Settings');
 }
 
 class ShowCommandPaletteIntent extends CustomIntent {
-  const ShowCommandPaletteIntent() : super(IntentId.showCommandPalette, name: 'Show Command Palette');
+  const ShowCommandPaletteIntent() : super(name: 'Show Command Palette');
 }
 
 class OpenNewTabIntent extends CustomIntent {
-  const OpenNewTabIntent() : super(IntentId.openNewTab, name: 'Open New Tab');
+  const OpenNewTabIntent() : super(name: 'Open New Tab');
 }
 
 class GoBackIntent extends CustomIntent {
-  const GoBackIntent() : super(IntentId.goBack, name: 'Go Back');
+  const GoBackIntent() : super(name: 'Go Back');
 }
 
 class NextTabIntent extends CustomIntent {
-  const NextTabIntent() : super(IntentId.nextTab, name: 'Next Tab');
+  const NextTabIntent() : super(name: 'Next Tab');
 }
 
 class PreviousTabIntent extends CustomIntent {
-  const PreviousTabIntent() : super(IntentId.previousTab, name: 'Previous Tab');
+  const PreviousTabIntent() : super(name: 'Previous Tab');
 }
 
-CustomIntent findById(IntentId id) {
-  switch (id) {
-    case IntentId.openSettings:
-      return const OpenSettingsIntent();
-    case IntentId.showCommandPalette:
-      return const ShowCommandPaletteIntent();
-    case IntentId.openNewTab:
-      return const OpenNewTabIntent();
-    case IntentId.goBack:
-      return const GoBackIntent();
-    case IntentId.previousTab:
-      return const PreviousTabIntent();
-    case IntentId.nextTab:
-      return const NextTabIntent();
-  }
+class SelectTabIntent extends CustomIntent {
+  final int tabIndex;
+  const SelectTabIntent(this.tabIndex) : super(name: 'Select Tab $tabIndex');
 }

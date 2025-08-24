@@ -14,13 +14,13 @@ class CustomShortcut {
   final LogicalKeySet keys;
 
   /// The action to perform when the shortcut is triggered
-  final IntentId intentId;
+  final CustomIntent intent;
 
   const CustomShortcut({
     required this.id,
     required this.name,
     required this.keys,
-    required this.intentId,
+    required this.intent,
   });
 
   /// Creates a copy of this shortcut with updated properties
@@ -28,13 +28,13 @@ class CustomShortcut {
     String? id,
     String? name,
     LogicalKeySet? keys,
-    IntentId? intentId,
+    CustomIntent? intent,
   }) {
     return CustomShortcut(
       id: id ?? this.id,
       name: name ?? this.name,
       keys: keys ?? this.keys,
-      intentId: intentId ?? this.intentId,
+      intent: intent ?? this.intent,
     );
   }
 

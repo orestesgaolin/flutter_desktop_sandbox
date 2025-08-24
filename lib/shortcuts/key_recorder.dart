@@ -21,10 +21,12 @@ class KeyRecorder extends StatefulWidget {
 }
 
 class _KeyRecorderState extends State<KeyRecorder> {
-  final FocusNode _focusNode = FocusNode();
+  final FocusNode _focusNode = FocusNode(debugLabel: 'KeyRecorder');
   Set<LogicalKeyboardKey> _pressedKeys = {};
   bool _isRecording = false;
   LogicalKeySet? _currentKeys;
+  bool _isFocused = false;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -33,6 +35,11 @@ class _KeyRecorderState extends State<KeyRecorder> {
     if (widget.initialKeys != null) {
       _pressedKeys = Set.from(widget.initialKeys!.keys);
     }
+    _focusNode.addListener(() {
+      setState(() {
+        _isFocused = _focusNode.hasFocus;
+      });
+    });
   }
 
   @override
@@ -60,7 +67,9 @@ class _KeyRecorderState extends State<KeyRecorder> {
       _isRecording = true;
       _pressedKeys = {};
     });
-    _focusNode.requestFocus();
+    if (!_focusNode.hasFocus) {
+      _focusNode.requestFocus();
+    }
   }
 
   void _finishRecording() {
@@ -155,53 +164,76 @@ class _KeyRecorderState extends State<KeyRecorder> {
 
   @override
   Widget build(BuildContext context) {
-    return KeyboardListener(
-      focusNode: _focusNode,
-      onKeyEvent: (KeyEvent event) {
-        if (!_isRecording) return;
-
-        if (event is KeyDownEvent) {
-          setState(() {
-            _pressedKeys.add(event.logicalKey);
-          });
-        } else if (event is KeyUpEvent) {
-          // When a key is released, finish recording if it's not a modifier key
-          if (!_isModifierKey(event.logicalKey)) {
-            _finishRecording();
-          }
-        }
+    return Actions(
+      actions: {
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (ActivateIntent intent) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              _startRecording();
+            });
+            setState(() {});
+            return null;
+          },
+        ),
       },
-      child: GestureDetector(
-        onTap: _startRecording,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: _isRecording ? Colors.blue : Colors.black,
-              width: 1,
-            ),
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  _getDisplayText(),
-                  style: TextStyle(
-                    color: _isRecording ? Colors.blue : Colors.black,
-                    fontWeight: _isRecording ? FontWeight.bold : null,
-                  ),
-                ),
+      child: KeyboardListener(
+        focusNode: _focusNode,
+        onKeyEvent: (KeyEvent event) {
+          if (!_isRecording) return;
+
+          if (event is KeyDownEvent) {
+            setState(() {
+              _pressedKeys.add(event.logicalKey);
+            });
+          } else if (event is KeyUpEvent) {
+            // When a key is released, finish recording if it's not a modifier key
+            if (!_isModifierKey(event.logicalKey)) {
+              _finishRecording();
+            }
+          }
+        },
+        child: GestureDetector(
+          onTap: _startRecording,
+          child: MouseRegion(
+            onEnter: (_) {
+              setState(() {
+                _isHovered = true;
+              });
+            },
+            onExit: (_) {
+              setState(() {
+                _isHovered = false;
+              });
+            },
+            cursor: SystemMouseCursors.click,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: AppTheme.of(context).dynamicCardDecoration(
+                focused: _isFocused,
+                hovered: _isHovered,
               ),
-              if (_isRecording && _pressedKeys.isEmpty)
-                Text(
-                  'Press keys...',
-                  style: TextStyle(
-                    color: Colors.blue,
-                    fontStyle: FontStyle.italic,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      _getDisplayText(),
+                      style: TextStyle(
+                        color: _isRecording ? Colors.blue : Colors.black,
+                        fontWeight: _isRecording ? FontWeight.bold : null,
+                      ),
+                    ),
                   ),
-                ),
-            ],
+                  if (_isRecording && _pressedKeys.isEmpty)
+                    Text(
+                      'Press keys...',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ),
         ),
       ),

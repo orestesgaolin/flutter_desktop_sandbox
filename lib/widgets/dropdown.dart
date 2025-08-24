@@ -53,11 +53,11 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
+    _focusNode = FocusNode(debugLabel: 'AppDropdown');
     _focusNode!.addListener(() {
       print('FocusNode listener: hasFocus=${_focusNode!.hasFocus}');
     });
-    _itemFocusNodes = widget.items.map((e) => FocusNode()).toList();
+    _itemFocusNodes = widget.items.map((e) => FocusNode(debugLabel: 'AppDropdownItem_$e')).toList();
   }
 
   @override
@@ -65,7 +65,7 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.items != widget.items) {
       _itemFocusNodes.forEach((node) => node.dispose());
-      _itemFocusNodes = widget.items.map((e) => FocusNode()).toList();
+      _itemFocusNodes = widget.items.map((e) => FocusNode(debugLabel: 'AppDropdownItem_$e')).toList();
     }
   }
 
@@ -160,23 +160,6 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
 
   @override
   Widget build(BuildContext context) {
-    final borderColorBase = Color.fromARGB(10, 0, 0, 0);
-    final focusBorderColor = Color.fromARGB(40, 0, 0, 0);
-    final hoverBorderColor = Color.fromARGB(20, 0, 0, 0);
-    final focusColor = Color.fromARGB(20, 0, 0, 0);
-    final hoverColor = Color.fromARGB(10, 0, 0, 0);
-    final borderColor = switch ((_isHovered, _isFocused, _isOpen)) {
-      (true, _, _) => hoverBorderColor,
-      (_, true, _) => focusBorderColor,
-      (_, _, true) => borderColorBase,
-      _ => borderColorBase,
-    };
-    final backgroundColor = switch ((_isHovered, _isFocused, _isOpen)) {
-      (true, _, _) => hoverColor,
-      (_, true, _) => focusColor,
-      (_, _, true) => null,
-      _ => null,
-    };
     return CompositedTransformTarget(
       link: _layerLink,
       child: GestureDetector(
@@ -222,10 +205,9 @@ class _AppDropdownState<T> extends State<AppDropdown<T>> {
           mouseCursor: SystemMouseCursors.click,
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: backgroundColor,
-              border: Border.all(color: borderColor),
-              borderRadius: BorderRadius.circular(8),
+            decoration: AppTheme.of(context).dynamicCardDecoration(
+              focused: _isFocused,
+              hovered: _isHovered,
             ),
             child: widget.header,
           ),

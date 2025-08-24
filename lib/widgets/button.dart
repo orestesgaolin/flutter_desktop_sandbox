@@ -45,7 +45,7 @@ class _AppButtonState extends State<AppButton> {
   @override
   void initState() {
     super.initState();
-    _focusNode = widget.focusNode ?? FocusNode();
+    _focusNode = widget.focusNode ?? FocusNode(debugLabel: 'AppButton');
     _focusNode.addListener(_onFocusChange);
   }
 

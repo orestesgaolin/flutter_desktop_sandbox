@@ -67,14 +67,7 @@ class AppTheme extends Equatable {
         textFieldCursorColor: Colors.black,
         textFieldSelectionColor: const Color.fromARGB(78, 0, 0, 0),
         defaultSpacing: 8.0,
-        cardDecoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(
-            color: Colors.lightGrey,
-            width: 0.5,
-          ),
-          borderRadius: BorderRadius.circular(4),
-        ),
+        cardDecoration: _defaultCardDecoration,
         tabActiveColor: Colors.white,
         tabInactiveColor: const Color.fromARGB(20, 0, 0, 0),
         buttonTheme: const AppButtonTheme(
@@ -86,6 +79,44 @@ class AppTheme extends Equatable {
           borderRadius: 8.0,
         ),
       );
+
+  static final BoxDecoration _defaultCardDecoration = BoxDecoration(
+    color: Colors.white,
+    border: Border.all(
+      color: Colors.lightGrey,
+      width: 0.5,
+    ),
+    borderRadius: BorderRadius.circular(4),
+  );
+
+  BoxDecoration dynamicCardDecoration({
+    bool focused = false,
+    bool hovered = false,
+  }) {
+    final borderColorBase = Color.fromARGB(50, 0, 0, 0);
+    final focusBorderColor = Color.fromARGB(60, 0, 0, 0);
+    final hoverBorderColor = Color.fromARGB(20, 0, 0, 0);
+    final focusColor = Color.fromARGB(20, 0, 0, 0);
+    final hoverColor = Color.fromARGB(10, 0, 0, 0);
+    final borderColor = switch ((hovered, focused)) {
+      (true, _) => hoverBorderColor,
+      (_, true) => focusBorderColor,
+      _ => borderColorBase,
+    };
+    final backgroundColor = switch ((hovered, focused)) {
+      (true, _) => hoverColor,
+      (_, true) => focusColor,
+      (_, _) => null,
+    };
+    return BoxDecoration(
+      color: backgroundColor ?? _defaultCardDecoration.color,
+      border: Border.all(
+        color: borderColor,
+        width: 0.5,
+      ),
+      borderRadius: BorderRadius.circular(4),
+    );
+  }
 
   static AppTheme of(BuildContext context) {
     return AppThemeInherited.of(context).theme;

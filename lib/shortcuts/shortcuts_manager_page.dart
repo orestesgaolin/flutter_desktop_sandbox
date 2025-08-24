@@ -21,7 +21,7 @@ class ShortcutsManagerPage extends StatefulWidget {
 class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
   CustomShortcut? _editingShortcut;
   LogicalKeySet? _selectedKeys;
-  IntentId? _selectedIntentId;
+  CustomIntent? _selectedIntent;
   bool _isEditing = false;
   late ShortcutsProvider _shortcutsProvider;
 
@@ -40,7 +40,7 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
     setState(() {
       _editingShortcut = null;
       _selectedKeys = null;
-      _selectedIntentId = null;
+      _selectedIntent = null;
       _isEditing = true;
     });
   }
@@ -49,7 +49,7 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
     setState(() {
       _editingShortcut = shortcut;
       _selectedKeys = shortcut.keys;
-      _selectedIntentId = shortcut.intentId;
+      _selectedIntent = shortcut.intent;
       _isEditing = true;
     });
   }
@@ -59,36 +59,36 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
       _isEditing = false;
       _editingShortcut = null;
       _selectedKeys = null;
-      _selectedIntentId = null;
+      _selectedIntent = null;
     });
   }
 
   void _saveShortcut() {
-    if (_selectedKeys == null || _selectedIntentId == null) {
+    if (_selectedKeys == null || _selectedIntent == null) {
       return; // Both must be selected
     }
 
     if (_editingShortcut == null) {
       // Adding new shortcut
-      final name = _getIntentName(_selectedIntentId!);
+      final name = _getIntentName(_selectedIntent!);
       _shortcutsProvider.addShortcut(
         CustomShortcut(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           name: name,
           keys: _selectedKeys!,
-          intentId: _selectedIntentId!,
+          intent: _selectedIntent!,
         ),
       );
     } else {
       // Updating existing shortcut
-      final name = _getIntentName(_selectedIntentId!);
+      final name = _getIntentName(_selectedIntent!);
       _shortcutsProvider.updateShortcut(
         _editingShortcut!.id,
         CustomShortcut(
           id: _editingShortcut!.id,
           name: name,
           keys: _selectedKeys!,
-          intentId: _selectedIntentId!,
+          intent: _selectedIntent!,
         ),
       );
     }
@@ -97,7 +97,7 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
       _isEditing = false;
       _editingShortcut = null;
       _selectedKeys = null;
-      _selectedIntentId = null;
+      _selectedIntent = null;
     });
   }
 
@@ -120,12 +120,11 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
 
   void _clearIntent() {
     setState(() {
-      _selectedIntentId = null;
+      _selectedIntent = null;
     });
   }
 
-  String _getIntentName(IntentId intentId) {
-    final intent = findById(intentId);
+  String _getIntentName(CustomIntent intent) {
     return intent.name ?? '';
   }
 
@@ -275,7 +274,7 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
                   const SizedBox(width: 12),
                   AppButton(
                     label: 'Save',
-                    onPressed: _selectedKeys != null && _selectedIntentId != null ? _saveShortcut : null,
+                    onPressed: _selectedKeys != null && _selectedIntent != null ? _saveShortcut : null,
                   ),
                 ],
               ),
@@ -290,24 +289,24 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
     return Row(
       children: [
         Expanded(
-          child: AppDropdown<IntentId>(
+          child: AppDropdown<CustomIntent>(
             header: Text(
-              _selectedIntentId == null ? 'Select an action' : _getIntentName(_selectedIntentId!),
+              _selectedIntent == null ? 'Select an action' : _getIntentName(_selectedIntent!),
               style: TextStyle(
-                color: _selectedIntentId == null ? Color(0xFF888888) : Colors.black,
+                color: _selectedIntent == null ? Color(0xFF888888) : Colors.black,
               ),
             ),
             itemBuilder: (value) => Text(_getIntentName(value)),
-            value: _selectedIntentId,
-            onChanged: (IntentId? value) {
+            value: _selectedIntent,
+            onChanged: (CustomIntent? value) {
               setState(() {
-                _selectedIntentId = value;
+                _selectedIntent = value;
               });
             },
-            items: IntentId.values,
+            items: CustomIntent.allIntents,
           ),
         ),
-        if (_selectedIntentId != null) ...[
+        if (_selectedIntent != null) ...[
           const SizedBox(width: 12),
           AppButton(onPressed: _clearIntent, label: 'Clear'),
         ],
