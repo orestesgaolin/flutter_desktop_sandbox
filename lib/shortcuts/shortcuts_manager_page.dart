@@ -124,6 +124,11 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
     });
   }
 
+  void _resetShortcuts() {
+    _shortcutsProvider.resetShortcuts();
+    setState(() {});
+  }
+
   String _getIntentName(CustomIntent intent) {
     return intent.name ?? '';
   }
@@ -148,7 +153,6 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
                   ),
                 ),
               ),
-              SizedBox(width: 80), // Balance for back button
             ],
           ),
           const SizedBox(height: 32),
@@ -158,7 +162,13 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
           else
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
+              spacing: 12,
               children: [
+                AppButton(
+                  onPressed: _resetShortcuts,
+                  label: 'Reset Shortcuts',
+                  variant: ButtonVariant.secondary,
+                ),
                 AppButton(
                   label: 'Add New Shortcut',
                   onPressed: _startAddShortcut,
@@ -270,6 +280,7 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
                   AppButton(
                     label: 'Cancel',
                     onPressed: _cancelEdit,
+                    variant: ButtonVariant.secondary,
                   ),
                   const SizedBox(width: 12),
                   AppButton(

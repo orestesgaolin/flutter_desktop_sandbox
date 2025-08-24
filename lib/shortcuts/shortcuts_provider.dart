@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:sandbox/shortcuts/intents.dart';
 import 'package:sandbox/shortcuts/shortcut_model.dart';
@@ -7,11 +8,60 @@ class ShortcutsProvider extends ChangeNotifier {
   /// The list of custom shortcuts
   final List<CustomShortcut> _shortcuts = [];
 
+  final List<CustomShortcut> _defaultShorcuts = [
+    CustomShortcut(
+      id: 'open_settings',
+      name: 'Open Settings',
+      keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.comma),
+      intent: OpenSettingsIntent(),
+    ),
+    CustomShortcut(
+      id: 'show_command_palette',
+      name: 'Show Command Palette',
+      keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyP),
+      intent: ShowCommandPaletteIntent(),
+    ),
+    CustomShortcut(
+      id: 'open_new_tab',
+      name: 'Open New Tab',
+      keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyT),
+      intent: OpenNewTabIntent(),
+    ),
+    CustomShortcut(
+      id: 'go_back',
+      name: 'Go Back',
+      keys: LogicalKeySet(LogicalKeyboardKey.backspace),
+      intent: GoBackIntent(),
+    ),
+    for (final i in [1, 2, 3, 4, 5, 6, 7, 8, 9])
+      CustomShortcut(
+        id: 'select_tab_$i',
+        name: 'Select Tab $i',
+        keys: LogicalKeySet(
+          LogicalKeyboardKey.meta,
+          switch (i) {
+            1 => LogicalKeyboardKey.digit1,
+            2 => LogicalKeyboardKey.digit2,
+            3 => LogicalKeyboardKey.digit3,
+            4 => LogicalKeyboardKey.digit4,
+            5 => LogicalKeyboardKey.digit5,
+            6 => LogicalKeyboardKey.digit6,
+            7 => LogicalKeyboardKey.digit7,
+            8 => LogicalKeyboardKey.digit8,
+            9 => LogicalKeyboardKey.digit9,
+            _ => null,
+          },
+        ),
+        intent: SelectTabIntent(i),
+      ),
+  ];
+
   /// Getter for shortcuts
   List<CustomShortcut> get shortcuts => List.unmodifiable(_shortcuts);
 
   /// Constructor with optional initial shortcuts
   ShortcutsProvider({List<CustomShortcut>? initialShortcuts}) {
+    _shortcuts.addAll(_defaultShorcuts);
     if (initialShortcuts != null) {
       _shortcuts.addAll(initialShortcuts);
     }
@@ -35,6 +85,12 @@ class ShortcutsProvider extends ChangeNotifier {
   /// Delete a shortcut
   void deleteShortcut(String id) {
     _shortcuts.removeWhere((s) => s.id == id);
+    notifyListeners();
+  }
+
+  void resetShortcuts() {
+    _shortcuts.clear();
+    _shortcuts.addAll(_defaultShorcuts);
     notifyListeners();
   }
 

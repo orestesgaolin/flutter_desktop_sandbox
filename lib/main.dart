@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:sandbox/theme.dart';
 import 'package:sandbox/page_route.dart';
 import 'package:sandbox/shortcuts/intents.dart';
-import 'package:sandbox/shortcuts/shortcut_model.dart';
 import 'package:sandbox/shortcuts/shortcuts_manager_page.dart';
 import 'package:sandbox/shortcuts/shortcuts_provider.dart';
 import 'package:sandbox/widgets/tab_view.dart';
@@ -12,53 +11,7 @@ import 'package:sandbox/widgets/widgets.dart';
 
 void main() {
   final shortcutsProvider = ShortcutsProvider(
-    initialShortcuts: [
-      CustomShortcut(
-        id: 'open_settings',
-        name: 'Open Settings',
-        keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.comma),
-        intent: OpenSettingsIntent(),
-      ),
-      CustomShortcut(
-        id: 'show_command_palette',
-        name: 'Show Command Palette',
-        keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyP),
-        intent: ShowCommandPaletteIntent(),
-      ),
-      CustomShortcut(
-        id: 'open_new_tab',
-        name: 'Open New Tab',
-        keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyT),
-        intent: OpenNewTabIntent(),
-      ),
-      CustomShortcut(
-        id: 'go_back',
-        name: 'Go Back',
-        keys: LogicalKeySet(LogicalKeyboardKey.backspace),
-        intent: GoBackIntent(),
-      ),
-      for (final i in [1, 2, 3, 4, 5, 6, 7, 8, 9])
-        CustomShortcut(
-          id: 'select_tab_$i',
-          name: 'Select Tab $i',
-          keys: LogicalKeySet(
-            LogicalKeyboardKey.meta,
-            switch (i) {
-              1 => LogicalKeyboardKey.digit1,
-              2 => LogicalKeyboardKey.digit2,
-              3 => LogicalKeyboardKey.digit3,
-              4 => LogicalKeyboardKey.digit4,
-              5 => LogicalKeyboardKey.digit5,
-              6 => LogicalKeyboardKey.digit6,
-              7 => LogicalKeyboardKey.digit7,
-              8 => LogicalKeyboardKey.digit8,
-              9 => LogicalKeyboardKey.digit9,
-              _ => null,
-            },
-          ),
-          intent: SelectTabIntent(i),
-        ),
-    ],
+    initialShortcuts: [],
   );
   runApp(
     MyApp(
@@ -224,10 +177,12 @@ class ShowcasePage extends StatelessWidget {
             AppTextField(),
             AppTextField(),
             AppButton(
-              onPressed: () {
-                AppTabController.of(context).selectedIndex = 1;
-              },
-              label: 'Settings',
+              onPressed: () {},
+              label: 'Primary Button',
+            ),
+            SecondaryButton(
+              onPressed: () {},
+              label: 'Secondary Button',
             ),
           ],
         ),
