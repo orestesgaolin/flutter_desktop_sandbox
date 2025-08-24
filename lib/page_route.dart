@@ -9,15 +9,10 @@ class DesktopPageRoute<T> extends PageRoute<T> {
   final WidgetBuilder builder;
 
   @override
-  Widget buildContent(BuildContext context) {
-    return builder(context);
-  }
+  Color? get barrierColor => null;
 
   @override
-  Color? get barrierColor => throw UnimplementedError();
-
-  @override
-  String? get barrierLabel => throw UnimplementedError();
+  String? get barrierLabel => null;
 
   @override
   Widget buildPage(
@@ -32,5 +27,8 @@ class DesktopPageRoute<T> extends PageRoute<T> {
   bool get maintainState => true;
 
   @override
-  Duration get transitionDuration => const Duration(milliseconds: 150);
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  Duration get reverseTransitionDuration => Duration.zero;
 }

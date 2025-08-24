@@ -1,46 +1,151 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
-import 'package:sandbox/colors.dart';
+import 'package:provider/provider.dart';
+import 'package:sandbox/theme.dart';
 import 'package:sandbox/page_route.dart';
+import 'package:sandbox/shortcuts/intents.dart';
+import 'package:sandbox/shortcuts/shortcut_model.dart';
+import 'package:sandbox/shortcuts/shortcuts_manager_page.dart';
+import 'package:sandbox/shortcuts/shortcuts_provider.dart';
+import 'package:sandbox/widgets/tab_view.dart';
+import 'package:sandbox/widgets/widgets.dart';
 
 void main() {
-  runApp(const MyApp());
+  final shortcutsProvider = ShortcutsProvider(
+    initialShortcuts: [
+      CustomShortcut(
+        id: 'open_settings',
+        name: 'Open Settings',
+        keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.comma),
+        intentId: IntentId.openSettings,
+      ),
+      CustomShortcut(
+        id: 'show_command_palette',
+        name: 'Show Command Palette',
+        keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyP),
+        intentId: IntentId.showCommandPalette,
+      ),
+      CustomShortcut(
+        id: 'open_new_tab',
+        name: 'Open New Tab',
+        keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyT),
+        intentId: IntentId.openNewTab,
+      ),
+      CustomShortcut(
+        id: 'go_back',
+        name: 'Go Back',
+        keys: LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.arrowLeft),
+        intentId: IntentId.goBack,
+      ),
+      CustomShortcut(
+        id: 'go_back',
+        name: 'Go Back',
+        keys: LogicalKeySet(LogicalKeyboardKey.backspace),
+        intentId: IntentId.goBack,
+      ),
+    ],
+  );
+  runApp(
+    MyApp(
+      shortcutsProvider: shortcutsProvider,
+    ),
+  );
 }
 
+final globalKey = GlobalKey<NavigatorState>();
+
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({
+    super.key,
+    required this.shortcutsProvider,
+  });
+
+  final ShortcutsProvider shortcutsProvider;
 
   @override
   Widget build(BuildContext context) {
-    return WidgetsApp(
-      title: 'Flutter Demo',
-      color: Colors.black,
-      routes: <String, WidgetBuilder>{
-        '/': (context) => MyHomePage(),
-      },
-      textStyle: const TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 14,
-      ),
-      shortcuts: <LogicalKeySet, Intent>{
-        LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyP): ActivateIntent(),
-      },
-      actions: <Type, Action<Intent>>{
-        ActivateIntent: CallbackAction<ActivateIntent>(
-          onInvoke: (ActivateIntent intent) {
-            debugPrint('Meta+P pressed');
-            return null;
-          },
+    return ChangeNotifierProvider.value(
+      value: shortcutsProvider,
+      child: DefaultTextEditingShortcuts(
+        child: AppThemeInherited(
+          theme: AppTheme.light(),
+          child: Builder(
+            builder: (context) {
+              final shortcutsProvider = context.watch<ShortcutsProvider>();
+              return WidgetsApp(
+                title: 'Desktop Demo',
+                color: AppTheme.of(context).backgroundColor,
+                navigatorKey: globalKey,
+                routes: <String, WidgetBuilder>{
+                  '/': (context) => MyHomePage(),
+                  '/settings': (context) => ShortcutsManagerPage(),
+                },
+                onUnknownRoute: (RouteSettings settings) {
+                  return DesktopPageRoute(
+                    settings: settings,
+                    builder: (context) => ColoredBox(
+                      color: AppTheme.of(context).backgroundColor,
+                      child: Center(
+                        child: Text(
+                          '404 - Page not found',
+                          style: AppTheme.of(context).paragraphStyle,
+                        ),
+                      ),
+                    ),
+                  );
+                },
+                textStyle: AppTheme.of(context).paragraphStyle,
+                shortcuts: {
+                  ...WidgetsApp.defaultShortcuts,
+                  LogicalKeySet(LogicalKeyboardKey.meta, LogicalKeyboardKey.keyP): ActivateIntent(),
+                  LogicalKeySet(LogicalKeyboardKey.escape): DismissIntent(),
+                  ...shortcutsProvider.getShortcutsMap(),
+                },
+                actions: <Type, Action<Intent>>{
+                  ...WidgetsApp.defaultActions,
+                  DismissIntent: CallbackAction<DismissIntent>(
+                    onInvoke: (DismissIntent intent) {
+                      print('DismissIntent - top');
+                      FocusScope.of(context).unfocus();
+                      return true;
+                    },
+                  ),
+                  OpenSettingsIntent: CallbackAction<OpenSettingsIntent>(
+                    onInvoke: (OpenSettingsIntent intent) {
+                      debugPrint('Opening settings');
+                      globalKey.currentState?.pushNamed('/settings');
+                      return true;
+                    },
+                  ),
+                  ShowCommandPaletteIntent: CallbackAction<ShowCommandPaletteIntent>(
+                    onInvoke: (ShowCommandPaletteIntent intent) {
+                      debugPrint('Showing command palette');
+                      return true;
+                    },
+                  ),
+                  OpenNewTabIntent: CallbackAction<OpenNewTabIntent>(
+                    onInvoke: (OpenNewTabIntent intent) {
+                      debugPrint('Opening new tab');
+                      return true;
+                    },
+                  ),
+                  GoBackIntent: CallbackAction<GoBackIntent>(
+                    onInvoke: (GoBackIntent intent) {
+                      debugPrint('Going back');
+                      globalKey.currentState?.maybePop();
+                      return true;
+                    },
+                  ),
+                },
+                pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) => DesktopPageRoute(
+                  settings: settings,
+                  builder: builder,
+                ),
+              );
+            },
+          ),
         ),
-      },
-      pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) => PageRouteBuilder<T>(
-        settings: settings,
-        pageBuilder:
-            (
-              BuildContext context,
-              Animation<double> animation,
-              Animation<double> secondaryAnimation,
-            ) => builder(context),
       ),
     );
   }
@@ -56,12 +161,48 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Text('Lorem ipsum dolor sit amet, consectetur adipiscing elit.'),
-        ],
+    return AppTabView(
+      tabs: const [
+        AppTab(
+          title: 'Home',
+          content: ShowcasePage(),
+        ),
+        AppTab(
+          title: 'Settings',
+          content: ShortcutsManagerPage(),
+        ),
+      ],
+    );
+  }
+}
+
+class ShowcasePage extends StatelessWidget {
+  const ShowcasePage({
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppPage(
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          spacing: AppTheme.of(context).defaultSpacing,
+          children: <Widget>[
+            Text(
+              'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+            ),
+            AppTextField(),
+            AppTextField(),
+            AppTextField(),
+            AppButton(
+              onPressed: () {
+                AppTabController.of(context).selectedIndex = 1;
+              },
+              label: 'Settings',
+            ),
+          ],
+        ),
       ),
     );
   }
