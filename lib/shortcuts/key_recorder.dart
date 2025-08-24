@@ -24,6 +24,7 @@ class _KeyRecorderState extends State<KeyRecorder> {
   final FocusNode _focusNode = FocusNode(debugLabel: 'KeyRecorder');
   Set<LogicalKeyboardKey> _pressedKeys = {};
   bool _isRecording = false;
+  bool _justStartedAndWaitingForKeyUp = false;
   LogicalKeySet? _currentKeys;
   bool _isFocused = false;
   bool _isHovered = false;
@@ -169,6 +170,7 @@ class _KeyRecorderState extends State<KeyRecorder> {
         ActivateIntent: CallbackAction<ActivateIntent>(
           onInvoke: (ActivateIntent intent) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
+              _justStartedAndWaitingForKeyUp = true;
               _startRecording();
             });
             setState(() {});
@@ -176,10 +178,17 @@ class _KeyRecorderState extends State<KeyRecorder> {
           },
         ),
       },
+
       child: KeyboardListener(
         focusNode: _focusNode,
         onKeyEvent: (KeyEvent event) {
           if (!_isRecording) return;
+          if (_justStartedAndWaitingForKeyUp) {
+            if (event is KeyUpEvent) {
+              _justStartedAndWaitingForKeyUp = false;
+            }
+            return;
+          }
 
           if (event is KeyDownEvent) {
             setState(() {
