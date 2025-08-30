@@ -137,6 +137,7 @@ class _ShortcutsManagerPageState extends State<ShortcutsManagerPage> {
   Widget build(BuildContext context) {
     return AppPage(
       scrollable: false,
+      padding: EdgeInsets.only(left: 16, right: 16, top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
