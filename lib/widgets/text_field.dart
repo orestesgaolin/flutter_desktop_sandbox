@@ -1,8 +1,9 @@
 import 'package:flutter/cupertino.dart' show cupertinoDesktopTextSelectionHandleControls;
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart' show AdaptiveTextSelectionToolbar;
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:sandbox/shortcuts/shortcuts_provider.dart';
 import 'package:sandbox/theme.dart';
 
 class AppTextField extends StatefulWidget {
@@ -108,20 +109,23 @@ class _AppTextFieldState extends State<AppTextField> {
                 },
               ),
             },
-            child: EditableText(
-              controller: controller,
-              focusNode: focusNode,
-              style: appTheme.textFieldStyle,
-              cursorColor: cursorColor,
-              backgroundCursorColor: cursorColor,
-              contextMenuBuilder: _defaultContextMenuBuilder,
-              selectionControls: textSelectionControls,
-              selectionColor: selectionColor,
-              enableInteractiveSelection: true,
-              autocorrectionTextRectColor: autocorrectionTextRectColor,
-              paintCursorAboveText: paintCursorAboveText,
-              showSelectionHandles: true,
-              cursorOffset: cursorOffset,
+            child: Shortcuts(
+              shortcuts: context.watch<ShortcutsProvider>().getTextFieldShortcuts(),
+              child: EditableText(
+                controller: controller,
+                focusNode: focusNode,
+                style: appTheme.textFieldStyle,
+                cursorColor: cursorColor,
+                backgroundCursorColor: cursorColor,
+                contextMenuBuilder: _defaultContextMenuBuilder,
+                selectionControls: textSelectionControls,
+                selectionColor: selectionColor,
+                enableInteractiveSelection: true,
+                autocorrectionTextRectColor: autocorrectionTextRectColor,
+                paintCursorAboveText: paintCursorAboveText,
+                showSelectionHandles: true,
+                cursorOffset: cursorOffset,
+              ),
             ),
           ),
         ),

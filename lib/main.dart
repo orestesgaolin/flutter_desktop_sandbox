@@ -116,6 +116,14 @@ class MyApp extends StatelessWidget {
                           return true;
                         },
                       ),
+                      TypeDigitIntent: CallbackAction<TypeDigitIntent>(
+                        onInvoke: (TypeDigitIntent intent) {
+                          print('TypeDigitIntent - ${intent.digit}');
+                          
+                          _showTypedCharacterOverlay(globalKey.currentState?.overlay, intent.digit.toString());
+                          return false;
+                        },
+                      ),
                     },
                     pageRouteBuilder: <T>(RouteSettings settings, WidgetBuilder builder) => DesktopPageRoute(
                       settings: settings,
@@ -240,4 +248,42 @@ class _FocusScopeListenerState extends State<FocusScopeListener> {
       ),
     );
   }
+}
+
+/// Overlay to show typed character
+/// This overlay will display the character being typed by the user
+void _showTypedCharacterOverlay(OverlayState? overlayState, String character) {
+  if (overlayState == null) return;
+
+  final overlayEntry = OverlayEntry(
+    builder: (context) => Positioned(
+      bottom: 100,
+      left: 0,
+      right: 0,
+      child: Center(
+        child: Container(
+          width: 80,
+          height: 80,
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(8),
+          ),  
+          child: Center(
+            child: Text(
+              character,
+              style: TextStyle(
+                fontSize: 36,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  overlayState.insert(overlayEntry);
+  Future.delayed(Duration(seconds: 1), () {
+    overlayEntry.remove();
+  });
 }

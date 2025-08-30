@@ -13,6 +13,7 @@ sealed class CustomIntent extends Intent {
       const PreviousTabIntent(),
       const NextTabIntent(),
       for (var i = 1; i < 10; i++) SelectTabIntent(i),
+      for (var i = 0; i < 10; i++) TypeDigitIntent(i),
     ];
   }
 }
@@ -44,4 +45,9 @@ class PreviousTabIntent extends CustomIntent {
 class SelectTabIntent extends CustomIntent {
   final int tabIndex;
   const SelectTabIntent(this.tabIndex) : super(name: 'Select Tab $tabIndex');
+}
+
+class TypeDigitIntent extends CustomIntent {
+  final int digit;
+  const TypeDigitIntent(this.digit) : super(name: 'Type Digit $digit');
 }

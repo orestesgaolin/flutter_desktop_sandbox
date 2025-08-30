@@ -59,6 +59,20 @@ class ShortcutsProvider extends ChangeNotifier {
   /// Getter for shortcuts
   List<CustomShortcut> get shortcuts => List.unmodifiable(_shortcuts);
 
+  /// Get shorcuts that need to be passed on text fields to counteract
+  /// any shorctuts assigned to normal keys
+  /// See more https://api.flutter.dev/flutter/widgets/DefaultTextEditingShortcuts-class.html
+  /// They will emit DoNothingAndStopPropagationIntent
+  Map<ShortcutActivator, Intent> getTextFieldShortcuts() {
+    final allNormalKeys = LogicalKeyboardKey.knownLogicalKeys;
+    final definedKeys = shortcuts.map((s) => s.keys);
+    final definedSingleKeys = definedKeys.where((e) => e.triggers.length == 1).expand((e) => e.triggers);
+
+    return {
+      for (final key in definedSingleKeys) SingleActivator(key): DoNothingAndStopPropagationIntent(),
+    };
+  }
+
   /// Constructor with optional initial shortcuts
   ShortcutsProvider({List<CustomShortcut>? initialShortcuts}) {
     _shortcuts.addAll(_defaultShorcuts);
